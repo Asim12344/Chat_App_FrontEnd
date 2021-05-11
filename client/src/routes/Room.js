@@ -83,7 +83,7 @@ const Room = (props) => {
         socketRef.current.emit("join_room", props.match.params.roomID);
 
         socketRef.current.on('other_user', userID => {
-            console.log("other_user = " , userID)
+            console.log("other_us1er = " , userID)
             callUser(userID);
             otherUser.current = userID;
         });
