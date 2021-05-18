@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useState } from "react";
 import io from "socket.io-client";
 import styled from "styled-components";
+import Loader from "react-loader-spinner";
 
 const Container = styled.div`
     height: 100vh;
@@ -77,27 +78,70 @@ const Room = (props) => {
     const sendChannel = useRef();
     const [text, setText] = useState("");
     const [messages, setMessages] = useState([]);
+    const [token,setToken] = useState(true)
+    const [loader,setLoader] = useState(true)
+    const [user,setUser] = useState(true)
 
     useEffect(() => {
         socketRef.current = io.connect("http://localhost:8000");
-        socketRef.current.emit("join_room", props.match.params.roomID);
+        socketRef.current.emit("connected", {token: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNjIxMTk4MjYyLCJqdGkiOiJiNDgyMjk0N2JiZGU0YzYwOGQxM2U0YzRjZTMwOWVmYyIsInVzZXJfaWQiOjEyMiwicm9sZXMiOnt9fQ.ycXMhUgeEGIQVOcsCBfIMeydOn16EgaM39gCILPi5a8"});
 
-        socketRef.current.on('other_user', userID => {
-            console.log("other_us1er = " , userID)
-            callUser(userID);
-            otherUser.current = userID;
+        socketRef.current.on('token', token => {
+            console.log("token = " , token)
+            console.log("token = " ,typeof(token))
+            setToken(true)
+            setLoader(false)
+            if (token == 'correct'){
+                socketRef.current.emit("join_room1");
+                socketRef.current.on('no_user', users => {
+                    console.log("users = " ,users)
+                    if(users.length == 1){
+                        setUser(false)
+                    }
+                });
+                socketRef.current.on('other_user', userID => {
+                    console.log("other_user = " , userID)
+                    callUser(userID);
+                    otherUser.current = userID;
+                });
+        
+                socketRef.current.on("user_joined", userID => {
+                    console.log("user_joined = " , userID)
+                    otherUser.current = userID;
+                    setUser(true)
+                });
+        
+                socketRef.current.on("offer", handleOffer);
+        
+                socketRef.current.on("answer", handleAnswer);
+        
+                socketRef.current.on("ice_candidate", handleNewICECandidateMsg);
+               
+               
+            }
+            if(token == 'incorrect'){
+                console.log("your token is not correct")
+                setToken(false)
+                setLoader(false)
+            }
         });
 
-        socketRef.current.on("user_joined", userID => {
-            console.log("user_joined = " , userID)
-            otherUser.current = userID;
-        });
+        // socketRef.current.on('other_user', userID => {
+        //     console.log("other_user = " , userID)
+        //     callUser(userID);
+        //     otherUser.current = userID;
+        // });
 
-        socketRef.current.on("offer", handleOffer);
+        // socketRef.current.on("user_joined", userID => {
+        //     console.log("user_joined = " , userID)
+        //     otherUser.current = userID;
+        // });
 
-        socketRef.current.on("answer", handleAnswer);
+        // socketRef.current.on("offer", handleOffer);
 
-        socketRef.current.on("ice_candidate", handleNewICECandidateMsg);
+        // socketRef.current.on("answer", handleAnswer);
+
+        // socketRef.current.on("ice_candidate", handleNewICECandidateMsg);
 
     }, []);
 
@@ -220,13 +264,37 @@ const Room = (props) => {
     }
 
     return (
-        <Container>
-            <Messages>
-                {messages.map(renderMessage)}
-            </Messages>
-            <MessageBox value={text} onChange={handleChange} placeholder="Say something....." />
-            <Button onClick={sendMessage}>Send..</Button>
-        </Container>
+       <div>
+       {loader ==true && (
+           <Loader type="Puff" color="#00BFFF" height={100} width={100}/>                        
+       )}
+        {loader == false && (
+            <div>
+                {token ==true && (
+                    <div>
+                        {user == true && (
+                            <Container>
+                                <Messages>
+                                    {messages.map(renderMessage)}
+                                </Messages>
+                                <MessageBox value={text} onChange={handleChange} placeholder="Say something....." />
+                                <Button onClick={sendMessage}>Send..</Button>
+                            </Container>
+                        )}
+                        {user ==false && (
+                            <h1>No user is online</h1>
+                        )}
+                       
+                    </div>
+                )}
+                {token == false && (
+                    <h1>Your token is incorrect</h1>
+                )}
+            </div>
+        )}
+       
+       
+        </div>
     );
 };
 
