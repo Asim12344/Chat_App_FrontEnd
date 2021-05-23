@@ -157,17 +157,18 @@ const Room = (props) => {
     }
 
     function createPeer(userID) {
+        const TURN_SERVER_URL = '52.13.92.7:3478';
+        const TURN_SERVER_USERNAME = 'test';
+        const TURN_SERVER_CREDENTIAL = 'test';
         const peer = new RTCPeerConnection({
-            // iceServers: [
-            //     {
-            //         urls: "stun:stun.stunprotocol.org"
-            //     },
-            //     {
-            //         urls: 'turn:numb.viagenie.ca',
-            //         credential: 'muazkh',
-            //         username: 'webrtc@live.com'
-            //     },
-            // ]
+            iceServers: [
+                {
+                    urls: 'turn:' + TURN_SERVER_URL + '?transport=tcp',
+                    username: TURN_SERVER_USERNAME,
+                    credential: TURN_SERVER_CREDENTIAL
+                    
+                }
+            ]
         });
 
         peer.onicecandidate = handleICECandidateEvent;
